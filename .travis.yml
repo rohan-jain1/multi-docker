@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rjai/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rjai/react-test npm test 
+
+after_success:
+  - docker build -t rjai/multi-client ./client
+  - docker build -t rjai/multi-nginx ./nginx
+  - docker build -t rjai/multi-server ./server
+  - docker build -t rjai/multi-worker ./worker
+  # login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push them to docker hub
+  - docker push rjai/multi-client
+  - docker push rjai/multi-nginx
+  - docker push rjai/multi-server
+  - docker push rjai/multi-worker
